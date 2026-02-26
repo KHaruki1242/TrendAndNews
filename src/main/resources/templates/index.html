@@ -4,38 +4,82 @@
     <meta charset="UTF-8">
     <title>ニュース＆トレンド ダッシュボード</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .section { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h2 { border-left: 5px solid #007bff; padding-left: 10px; color: #333; }
-        ul { list-style: none; padding: 0; }
-        li { margin-bottom: 10px; border-bottom: 1px dotted #ccc; padding-bottom: 5px; }
-        .date { font-size: 0.8em; color: #666; margin-right: 10px; }
-        a { text-decoration: none; color: #007bff; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: auto; }
+        h1 { text-align: center; color: #1a73e8; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #1a73e8; padding-bottom: 10px; font-size: 1.2em; color: #1a73e8; }
+        
+        /* トレンドの横並び用 */
+        .trend-list { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; list-style: none; }
+        .trend-item { background: #e8f0fe; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+
+        /* 天気のグリッド用 */
+        .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .weather-box { border: 1px solid #ddd; padding: 10px; border-radius: 8px; text-align: center; }
+        
+        .news-list { list-style: none; padding: 0; }
+        .news-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+        .date { font-size: 0.85em; color: #777; margin-right: 10px; }
+        a { color: #1a73e8; text-decoration: none; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>ニュース＆トレンド</h1>
 
-    <h1>ニュース＆トレンド</h1>
+        <div class="card">
+            <h2>🔥 今日のトレンド</h2>
+            <ul class="trend-list">
+                <li class="trend-item" th:each="t : ${recentTrends}" th:text="${t.keyword}">トレンドワード</li>
+                <li th:if="${#lists.isEmpty(recentTrends)}">現在、トレンドデータはありません</li>
+            </ul>
+        </div>
 
-    <div class="section">
-        <h2>今日のトレンド / 最近のニュース</h2>
-        <ul>
-            <li th:each="news : ${recentNews}">
-                <span class="date" th:text="${news.publishedAt}">2026-02-26</span>
-                <a th:href="${news.url}" th:text="${news.title}" target="_blank">ニュースタイトル</a>
-            </li>
-        </ul>
+        <div class="card">
+            <h2>📰 最近のニュース</h2>
+            <ul class="news-list">
+                <li class="news-item" th:each="n : ${recentNews}">
+                    <span class="date" th:text="${n.publishedAt}">2026-02-26</span>
+                    <a th:href="${n.url}" th:text="${n.title}" target="_blank">ニュースタイトル</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🌤 天気予報 (1日後・3日後・1週間後)</h2>
+            <div class="weather-grid">
+                <div class="weather-box" th:each="w : ${weathers}">
+                    <strong th:text="${w.prefecture} + ' ' + ${w.city}">東京都 港区</strong><br>
+                    <span th:text="${w.date}">2026-02-27</span><br>
+                    <span th:text="${w.forecast}">晴れ</span><br>
+                    <span style="color:red" th:text="${w.maxTemp} + '℃'">20℃</span> / 
+                    <span style="color:blue" th:text="${w.minTemp} + '℃'">10℃</span>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <div class="card" style="flex: 1;">
+                <h2>📁 過去のニュース</h2>
+                <ul class="news-list">
+                    <li class="news-item" th:each="n : ${oldNews}">
+                        <span class="date" th:text="${n.publishedAt}">2026-02-01</span>
+                        <span th:text="${n.title}">過去のタイトル</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="card" style="flex: 1;">
+                <h2>📁 過去のトレンド</h2>
+                <ul class="news-list">
+                    <li class="news-item" th:each="t : ${oldTrends}">
+                        <span class="date" th:text="${#temporals.format(t.datetime, 'MM/dd')}">02/01</span>
+                        <span th:text="${t.keyword}">過去トレンド</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
-
-    <div class="section">
-        <h2>過去のニュース</h2>
-        <ul>
-            <li th:each="news : ${oldNews}">
-                <span class="date" th:text="${news.publishedAt}">2026-02-01</span>
-                <span th:text="${news.title}">過去のタイトル</span>
-            </li>
-        </ul>
-    </div>
-
 </body>
 </html>
