@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ニュース＆トレンド ダッシュボード</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .section { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { border-left: 5px solid #007bff; padding-left: 10px; color: #333; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 10px; border-bottom: 1px dotted #ccc; padding-bottom: 5px; }
+        .date { font-size: 0.8em; color: #666; margin-right: 10px; }
+        a { text-decoration: none; color: #007bff; }
+    </style>
+</head>
+<body>
+
+    <h1>ニュース＆トレンド</h1>
+
+    <div class="section">
+        <h2>今日のトレンド / 最近のニュース</h2>
+        <ul>
+            <li th:each="news : ${recentNews}">
+                <span class="date" th:text="${news.publishedAt}">2026-02-26</span>
+                <a th:href="${news.url}" th:text="${news.title}" target="_blank">ニュースタイトル</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>過去のニュース</h2>
+        <ul>
+            <li th:each="news : ${oldNews}">
+                <span class="date" th:text="${news.publishedAt}">2026-02-01</span>
+                <span th:text="${news.title}">過去のタイトル</span>
+            </li>
+        </ul>
+    </div>
+
+</body>
+</html>
