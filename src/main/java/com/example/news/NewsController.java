@@ -38,25 +38,20 @@ public class NewsController {
         return "index";
     }
     
-    @PostMapping("/api/news")
-    @ResponseBody
-    public String receiveNews(@RequestBody News news) {
-        // GASから届いたデータをDBに保存
-        // パワポ要件①：URL、表題、日付を保存 [cite: 35]
-        news.setPublishedAt(java.time.LocalDate.now()); // 届いた日を公開日に設定
-        newsRepository.save(news);
-        return "Success: Saved " + news.getTitle();
-    }
- // トレンドデータ受け取り用 API
     @PostMapping("/api/trend")
     @ResponseBody
-    public String receiveTrend(@RequestBody Trend trend) {
-        // パワポ要件②：日時等を保持 [cite: 35]
+    public String receiveTrend(@RequestBody(required = false) String body) {
+        // 何が届いても、とにかく「文字列」として受け取る。解析はしない。
+        System.out.println("受信した生データ: " + body);
+        
+        Trend trend = new Trend();
+        trend.setKeyword("GASから受信成功");
         trend.setDatetime(java.time.LocalDateTime.now());
         trendRepository.save(trend);
-        return "Success: Saved Trend " + trend.getKeyword();
+        
+        return "OK! Good Night!";
     }
-
+    
     // 天気データ受け取り用 API
     @PostMapping("/api/weather")
     @ResponseBody
