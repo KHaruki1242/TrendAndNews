@@ -5,6 +5,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
@@ -38,18 +41,20 @@ public class NewsController {
         return "index";
     }
     
-    @PostMapping("/api/trend")
+    @RequestMapping(value = "/api/trend", method = {RequestMethod.GET, RequestMethod.POST}) // GETもPOSTも許可
     @ResponseBody
-    public String receiveTrend(@RequestBody(required = false) String body) {
-        // 何が届いても、とにかく「文字列」として受け取る。解析はしない。
-        System.out.println("受信した生データ: " + body);
+    public String receiveTrend(@RequestParam(value = "keyword", required = false) String keyword) {
+        // 1. 届いたデータを表示
+        System.out.println("★受信成功！キーワード: " + keyword);
         
         Trend trend = new Trend();
-        trend.setKeyword("GASから受信成功");
+        trend.setKeyword(keyword != null ? keyword : "テスト受信");
         trend.setDatetime(java.time.LocalDateTime.now());
+        
+        // 2. 保存
         trendRepository.save(trend);
         
-        return "OK! Good Night!";
+        return "SUCCESS: Java received -> " + keyword;
     }
     
     // 天気データ受け取り用 API
