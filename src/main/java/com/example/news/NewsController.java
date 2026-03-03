@@ -25,38 +25,49 @@ public class NewsController {
     
     @GetMapping("/")
     public String index(Model model) {
-        // ① 最近のニュース [cite: 35]
+        // ① 最近・過去のニュース
         model.addAttribute("recentNews", newsRepository.findByArchivedFalse());
-        // ④ 過去のニュース [cite: 36]
         model.addAttribute("oldNews", newsRepository.findByArchivedTrue());
         
-        // 最近のトレンド [cite: 4]
+        // ★修正点：トレンドを「日付が新しい順」に全件取得して渡す
+        // HTML側で index < 5 を使って最新5件を切り分けるため、全件渡します
+        model.addAttribute("trends", trendRepository.findAllByOrderByDatetimeDesc());
+        
+        // 既存の取得方法も残しておきたい場合はこちら（必要に応じて使い分けてください）
         model.addAttribute("recentTrends", trendRepository.findByArchivedFalse());
-        // ⑤ 過去のトレンド [cite: 36]
         model.addAttribute("oldTrends", trendRepository.findByArchivedTrue());
         
-        // ③ 天気予報 [cite: 35]
+        // ③ 天気予報
         model.addAttribute("weathers", weatherRepository.findAll());
         
         return "index";
     }
     
-    @RequestMapping(value = "/api/trend", method = {RequestMethod.GET, RequestMethod.POST}) // GETもPOSTも許可
+    @RequestMapping(value = "/api/trend", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
-    public String receiveTrend(@RequestParam(value = "keyword", required = false) String keyword) {
-        // 1. 届いたデータを表示
-        System.out.println("★受信成功！キーワード: " + keyword);
+    public String receiveTrend(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "link", required = false) String link) { 
+        
+        System.out.println("★受信成功！ キーワード: " + keyword + " | URL: " + link);
         
         Trend trend = new Trend();
-        trend.setKeyword(keyword != null ? keyword : "テスト受信");
+        trend.setKeyword(keyword != null ? keyword : "タイトルなし");
+        
+        // URLをセット（Trend.javaにsetLinkがあること！）
+        if (link != null) {
+            trend.setLink(link); 
+        }
+        
         trend.setDatetime(java.time.LocalDateTime.now());
         
-        // 2. 保存
+        // 保存
         trendRepository.save(trend);
         
         return "SUCCESS: Java received -> " + keyword;
     }
-    
+
+    // ...以下、weather API等はそのまま
     // 天気データ受け取り用 API
     @PostMapping("/api/weather")
     @ResponseBody

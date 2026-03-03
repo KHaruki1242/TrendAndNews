@@ -12,4 +12,7 @@ public interface TrendRepository extends JpaRepository<Trend, Long> {
     
     // パワポ要件⑤「過去のトレンド」を取得
     List<Trend> findByArchivedTrue();
+    
+    // 追加：作成日時の新しい順に全件取得する
+    List<Trend> findAllByOrderByDatetimeDesc();
 }

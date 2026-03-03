@@ -20,6 +20,7 @@ public class Trend {
     private Long id;
 
     private String keyword;
+    private String link;
     private LocalDateTime datetime; // ここでエラーが起きがち
     private boolean archived = false;
 }
