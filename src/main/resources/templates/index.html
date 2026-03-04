@@ -2,37 +2,75 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>ニュース＆トレンド ダッシュボード</title>
+    <title>News & Trend Dashboard</title>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        /* 全体のレイアウト */
+        body { font-family: 'Helvetica Neue', Arial, "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; background-color: #f8f9fa; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1000px; margin: auto; }
-        h1 { text-align: center; color: #1a73e8; }
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2 { border-bottom: 2px solid #1a73e8; padding-bottom: 10px; font-size: 1.2em; color: #1a73e8; }
-        .trend-list { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; list-style: none; }
-        .trend-item { background: #e8f0fe; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
-        .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .weather-box { border: 1px solid #ddd; padding: 10px; border-radius: 8px; text-align: center; }
-        .news-list { list-style: none; padding: 0; }
-        .news-item { padding: 10px 0; border-bottom: 1px solid #eee; }
-        .date { font-size: 0.85em; color: #777; margin-right: 10px; }
+        h1 { text-align: center; color: #1a73e8; margin-bottom: 30px; font-weight: 700; }
+        .card { background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        h2 { border-left: 5px solid #1a73e8; padding-left: 15px; font-size: 1.2em; color: #1a73e8; margin-top: 0; margin-bottom: 20px; }
+        
+        /* 🔥 トレンドバッジのデザイン */
+        .trend-list { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; list-style: none; }
+        .trend-item { 
+            background: #ffffff; 
+            border: 1px solid #d1e3fa;
+            padding: 10px 20px; 
+            border-radius: 50px; 
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .trend-item:hover { 
+            transform: translateY(-4px); 
+            background: #1a73e8; 
+            border-color: #1a73e8;
+            box-shadow: 0 8px 15px rgba(26, 115, 232, 0.2);
+        }
+        .trend-item a { color: #1a73e8; text-decoration: none; display: block; }
+        .trend-item:hover a { color: #ffffff !important; }
+
+        /* 📰 ニュース・過去ログのリスト */
+        .news-list { list-style: none; padding: 0; margin: 0; }
+        .news-item { padding: 12px 0; border-bottom: 1px solid #f1f3f4; display: flex; align-items: center; justify-content: space-between; }
+        .news-item:last-child { border-bottom: none; }
+        .news-content { display: flex; align-items: center; gap: 15px; flex-grow: 1; }
+        .date { font-size: 0.85em; color: #888; min-width: 90px; }
         a { color: #1a73e8; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ❌ 削除ボタン */
+        .delete-btn { 
+            background: none; border: none; color: #ff4d4f; cursor: pointer; 
+            font-size: 1.2em; padding: 0 10px; transition: transform 0.2s; 
+        }
+        .delete-btn:hover { transform: scale(1.3); color: #cf1322; }
+
+        /* 🌤 天気予報のグリッド */
+        .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .weather-box { background: #fcfcfc; border: 1px solid #eee; padding: 15px; border-radius: 12px; text-align: center; }
+        
+        /* 下部レイアウト調整 */
+        .bottom-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+        .bottom-layout .card { flex: 1; min-width: 300px; }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>ニュース＆トレンド</h1>
+        <h1>News & Trend Dashboard</h1>
 
         <div class="card">
-            <h2>🔥 今日のトレンド</h2>
+            <h2>🔥 今日のトレンド (TOP 5)</h2>
             <ul class="trend-list">
                 <th:block th:each="t, iterStat : ${trends}" th:if="${iterStat.index < 5}">
                     <li class="trend-item">
-                        <a th:if="${t.link != null}" th:href="${t.link}" th:text="${t.keyword}" target="_blank" style="color: inherit;"></a>
-                        <span th:if="${t.link == null}" th:text="${t.keyword}"></span>
+                        <a th:if="${t.link != null}" th:href="${t.link}" th:text="${t.keyword}" target="_blank">トレンド</a>
+                        <span th:if="${t.link == null}" th:text="${t.keyword}">トレンド</span>
                     </li>
                 </th:block>
-                <li th:if="${#lists.isEmpty(trends)}">データがありません</li>
+                <li th:if="${#lists.isEmpty(trends)}">データ収集中です...</li>
             </ul>
         </div>
 
@@ -40,8 +78,10 @@
             <h2>📰 最近のニュース</h2>
             <ul class="news-list">
                 <li class="news-item" th:each="n : ${recentNews}">
-                    <span class="date" th:text="${n.publishedAt}"></span>
-                    <a th:href="${n.url}" th:text="${n.title}" target="_blank"></a>
+                    <div class="news-content">
+                        <span class="date" th:text="${n.publishedAt}"></span>
+                        <a th:href="${n.url}" th:text="${n.title}" target="_blank"></a>
+                    </div>
                 </li>
             </ul>
         </div>
@@ -53,35 +93,67 @@
                     <strong th:text="${w.prefecture} + ' ' + ${w.city}"></strong><br>
                     <span th:text="${w.date}"></span><br>
                     <span th:text="${w.forecast}"></span><br>
-                    <span style="color:red" th:text="${w.maxTemp} + '℃'"></span> / 
-                    <span style="color:blue" th:text="${w.minTemp} + '℃'"></span>
+                    <span style="color:#ff4d4f" th:text="${w.maxTemp} + '℃'"></span> / 
+                    <span style="color:#1a73e8" th:text="${w.minTemp} + '℃'"></span>
                 </div>
             </div>
         </div>
 
-        <div style="display: flex; gap: 20px;">
-            <div class="card" style="flex: 1;">
+        <div class="bottom-layout">
+            <div class="card">
                 <h2>📁 過去のニュース</h2>
                 <ul class="news-list">
                     <li class="news-item" th:each="n : ${oldNews}">
-                        <span class="date" th:text="${n.publishedAt}"></span>
-                        <span th:text="${n.title}"></span>
+                        <div class="news-content">
+                            <span class="date" th:text="${n.publishedAt}"></span>
+                            <span th:text="${n.title}"></span>
+                        </div>
                     </li>
                 </ul>
             </div>
-            <div class="card" style="flex: 1;">
-                <h2>📁 過去のトレンド</h2>
+
+            <div class="card">
+                <h2>📁 過去のトレンドアーカイブ</h2>
                 <ul class="news-list">
                     <th:block th:each="t, iterStat : ${trends}" th:if="${iterStat.index >= 5}">
                         <li class="news-item">
-                            <span class="date" th:text="${#temporals.format(t.datetime, 'MM/dd HH:mm')}"></span>
-                            <a th:if="${t.link != null}" th:href="${t.link}" th:text="${t.keyword}" target="_blank"></a>
-                            <span th:if="${t.link == null}" th:text="${t.keyword}"></span>
+                            <div class="news-content">
+                                <span class="date" th:text="${#temporals.format(t.datetime, 'MM/dd HH:mm')}"></span>
+                                <a th:if="${t.link != null}" th:href="${t.link}" th:text="${t.keyword}" target="_blank"></a>
+                                <span th:if="${t.link == null}" th:text="${t.keyword}"></span>
+                            </div>
+                            <button class="delete-btn" th:onclick="'deleteTrend(' + ${t.id} + ')'" title="削除">×</button>
                         </li>
                     </th:block>
                 </ul>
             </div>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        // 1. 削除処理
+        function deleteTrend(id) {
+            if (!confirm("このトレンドを削除してもよろしいですか？")) return;
+            
+            fetch('/api/trend/delete/' + id, { 
+                method: 'POST' 
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload(); // 削除成功でリロード
+                } else {
+                    alert("削除に失敗しました。");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // 2. 自動更新 (5分ごと)
+        setInterval(() => {
+            console.log("Auto-reloading page...");
+            location.reload();
+        }, 300000); // 300,000ms = 5 minutes
+    </script>
+
 </body>
 </html>

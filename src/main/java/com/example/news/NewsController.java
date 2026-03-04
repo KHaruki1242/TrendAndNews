@@ -3,6 +3,7 @@ package com.example.news;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,24 +50,30 @@ public class NewsController {
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "link", required = false) String link) { 
         
-        System.out.println("★受信成功！ キーワード: " + keyword + " | URL: " + link);
-        
-        Trend trend = new Trend();
-        trend.setKeyword(keyword != null ? keyword : "タイトルなし");
-        
-        // URLをセット（Trend.javaにsetLinkがあること！）
-        if (link != null) {
-            trend.setLink(link); 
+        // 1. 重複チェック（ここを追加！）
+        if (keyword != null && trendRepository.existsByKeyword(keyword)) {
+            System.out.println("⚠️ 既に保存済みのためスキップ: " + keyword);
+            return "SKIP: Already exists";
         }
         
+        // 2. 新規保存（重複がない場合のみ実行される）
+        System.out.println("★新規受信成功！ キーワード: " + keyword);
+        Trend trend = new Trend();
+        trend.setKeyword(keyword != null ? keyword : "タイトルなし");
+        trend.setLink(link); 
         trend.setDatetime(java.time.LocalDateTime.now());
         
-        // 保存
         trendRepository.save(trend);
-        
-        return "SUCCESS: Java received -> " + keyword;
+        return "SUCCESS";
     }
-
+    
+    @PostMapping("/api/trend/delete/{id}")
+    @ResponseBody
+    public String deleteTrend(@PathVariable Long id) {
+        trendRepository.deleteById(id);
+        return "DELETED";
+    }
+    
     // ...以下、weather API等はそのまま
     // 天気データ受け取り用 API
     @PostMapping("/api/weather")
