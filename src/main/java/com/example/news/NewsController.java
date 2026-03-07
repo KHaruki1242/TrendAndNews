@@ -1,5 +1,10 @@
 package com.example.news;
 
+import java.time.LocalDateTime;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,73 +19,61 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class NewsController {
 
-    private final NewsRepository newsRepository;
     private final TrendRepository trendRepository;
     private final WeatherRepository weatherRepository;
 
-    public NewsController(NewsRepository newsRepository, TrendRepository trendRepository, WeatherRepository weatherRepository) {
-        this.newsRepository = newsRepository;
+    public NewsController(TrendRepository trendRepository, WeatherRepository weatherRepository) {
         this.trendRepository = trendRepository;
         this.weatherRepository = weatherRepository;
     }
-    
+
     @GetMapping("/")
-    public String index(Model model) {
-        // ① 最近・過去のニュース
-        model.addAttribute("recentNews", newsRepository.findByArchivedFalse());
-        model.addAttribute("oldNews", newsRepository.findByArchivedTrue());
+    public String index(Model model, @RequestParam(defaultValue = "0") int page) {
+        // 1ページ20件で取得
+        Pageable pageable = PageRequest.of(page, 20);
+        Page<Trend> trendPage = trendRepository.findAllByOrderByDatetimeDesc(pageable);
+
+        model.addAttribute("recentNews", trendPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", trendPage.getTotalPages());
         
-        // ★修正点：トレンドを「日付が新しい順」に全件取得して渡す
-        // HTML側で index < 5 を使って最新5件を切り分けるため、全件渡します
-        model.addAttribute("trends", trendRepository.findAllByOrderByDatetimeDesc());
-        
-        // 既存の取得方法も残しておきたい場合はこちら（必要に応じて使い分けてください）
-        model.addAttribute("recentTrends", trendRepository.findByArchivedFalse());
-        model.addAttribute("oldTrends", trendRepository.findByArchivedTrue());
-        
-        // ③ 天気予報
+        // 天気リスト（weathers）を取得
         model.addAttribute("weathers", weatherRepository.findAll());
         
         return "index";
     }
-    
+
+ // 確実に GET と POST の両方を、このパスで受け取れるように指定
     @RequestMapping(value = "/api/trend", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public String receiveTrend(
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "link", required = false) String link) { 
+            @RequestParam(name = "keyword") String keyword, 
+            @RequestParam(name = "link") String link) { 
         
-        // 1. 重複チェック（ここを追加！）
-        if (keyword != null && trendRepository.existsByKeyword(keyword)) {
-            System.out.println("⚠️ 既に保存済みのためスキップ: " + keyword);
-            return "SKIP: Already exists";
-        }
-        
-        // 2. 新規保存（重複がない場合のみ実行される）
-        System.out.println("★新規受信成功！ キーワード: " + keyword);
+        System.out.println("★データが届きました！: " + keyword);
+
         Trend trend = new Trend();
-        trend.setKeyword(keyword != null ? keyword : "タイトルなし");
-        trend.setLink(link); 
-        trend.setDatetime(java.time.LocalDateTime.now());
+        trend.setKeyword(keyword);
+        trend.setLink(link);
+        trend.setDatetime(LocalDateTime.now());
         
         trendRepository.save(trend);
-        return "SUCCESS";
+        
+        return "SUCCESS"; // これを返さないとGAS側で「拒否」扱いになる
     }
-    
+
+    @PostMapping("/api/weather")
+    @ResponseBody
+    public String receiveWeather(@RequestBody Weather weather) {
+        weatherRepository.deleteAll(); // 港区を消す
+        weatherRepository.save(weather);
+        return "Success";
+    }
+
     @PostMapping("/api/trend/delete/{id}")
     @ResponseBody
     public String deleteTrend(@PathVariable Long id) {
         trendRepository.deleteById(id);
         return "DELETED";
-    }
-    
-    // ...以下、weather API等はそのまま
-    // 天気データ受け取り用 API
-    @PostMapping("/api/weather")
-    @ResponseBody
-    public String receiveWeather(@RequestBody Weather weather) {
-        // パワポ要件③：都道府県すべての天気取得（1日後、3日後、1週間後） [cite: 35]
-        weatherRepository.save(weather);
-        return "Success: Saved Weather for " + weather.getCity();
     }
 }

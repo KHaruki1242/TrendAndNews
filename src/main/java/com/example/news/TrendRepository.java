@@ -2,19 +2,22 @@ package com.example.news;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+
 @Repository
 public interface TrendRepository extends JpaRepository<Trend, Long> {
-    // 最近のトレンド（archivedがfalse）を取得
-    List<Trend> findByArchivedFalse();
     
-    // パワポ要件⑤「過去のトレンド」を取得
-    List<Trend> findByArchivedTrue();
-    
-    // 追加：作成日時の新しい順に全件取得する
+	
+    // 1. 日付の新しい順に全件取得する（これがダッシュボードのメインになります）
     List<Trend> findAllByOrderByDatetimeDesc();
     
-    boolean existsByKeyword(String keyword);
+    // ページ指定（20件ずつなど）で日付順に取得する
+    Page<Trend> findAllByOrderByDatetimeDesc(Pageable pageable);
 }
+
+
+ 

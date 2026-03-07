@@ -36,7 +36,7 @@
         .news-item { padding: 12px 0; border-bottom: 1px solid #f1f3f4; display: flex; align-items: center; justify-content: space-between; }
         .news-item:last-child { border-bottom: none; }
         .news-content { display: flex; align-items: center; gap: 15px; flex-grow: 1; }
-        .date { font-size: 0.85em; color: #888; min-width: 90px; }
+        .date { font-size: 0.85em; color: #888; min-width: 120px; }
         a { color: #1a73e8; text-decoration: none; }
         a:hover { text-decoration: underline; }
 
@@ -50,10 +50,6 @@
         /* 🌤 天気予報のグリッド */
         .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
         .weather-box { background: #fcfcfc; border: 1px solid #eee; padding: 15px; border-radius: 12px; text-align: center; }
-        
-        /* 下部レイアウト調整 */
-        .bottom-layout { display: flex; gap: 20px; flex-wrap: wrap; }
-        .bottom-layout .card { flex: 1; min-width: 300px; }
     </style>
 </head>
 <body>
@@ -64,27 +60,15 @@
         <div class="card">
             <h2>🔥 今日のトレンド (TOP 5)</h2>
             <ul class="trend-list">
-                <th:block th:each="t, iterStat : ${trends}" th:if="${iterStat.index < 5}">
+                <th:block th:each="t, iterStat : ${recentNews}" th:if="${iterStat.index < 5}">
                     <li class="trend-item">
-                        <a th:if="${t.link != null}" th:href="${t.link}" th:text="${t.keyword}" target="_blank">トレンド</a>
-                        <span th:if="${t.link == null}" th:text="${t.keyword}">トレンド</span>
+                        <a th:href="${t.link}" th:text="${t.keyword}" target="_blank">トレンド</a>
                     </li>
                 </th:block>
-                <li th:if="${#lists.isEmpty(trends)}">データ収集中です...</li>
+                <li th:if="${#lists.isEmpty(recentNews)}">データ収集中です...</li>
             </ul>
         </div>
-
-        <div class="card">
-            <h2>📰 最近のニュース</h2>
-            <ul class="news-list">
-                <li class="news-item" th:each="n : ${recentNews}">
-                    <div class="news-content">
-                        <span class="date" th:text="${n.publishedAt}"></span>
-                        <a th:href="${n.url}" th:text="${n.title}" target="_blank"></a>
-                    </div>
-                </li>
-            </ul>
-        </div>
+		
 
         <div class="card">
             <h2>🌤 天気予報</h2>
@@ -98,49 +82,53 @@
                 </div>
             </div>
         </div>
+		
+		<div class="card">
+		    <h2>📰 最近のニュース</h2>
+		    <ul class="news-list">
+				<li class="news-item" th:each="n : ${recentNews}">
+				    <div class="news-content">
+				        <span class="date" th:text="${#temporals.format(n.datetime, 'MM/dd HH:mm')}"></span>
+				        
+				        <a th:href="${n.link}" th:text="${n.keyword}" target="_blank" style="color: #1a73e8; font-weight: bold; text-decoration: none;"></a>
+				    </div>
+				    <button class="delete-btn" th:onclick="'deleteTrend(' + ${n.id} + ')'">×</button>
+				</li>
+		        
+		        <li th:if="${#lists.isEmpty(recentNews)}" style="list-style: none; color: #888; padding: 10px;">
+		            ニュースを収集しています... GASを実行してください。
+		        </li>
+		    </ul>
+			<div class="pagination" th:if="${totalPages > 1}" style="margin-top: 20px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 20px;">
+			            <a th:if="${currentPage > 0}" 
+			               th:href="@{/(page=${currentPage - 1})}" 
+			               style="padding: 8px 16px; background: #fff; border: 1px solid #1a73e8; border-radius: 8px; color: #1a73e8; font-weight: bold; text-decoration: none;">
+			               ◀ 前の20件
+			            </a>
+			            
+			            <span style="font-weight: bold; color: #555;" th:text="${currentPage + 1} + ' / ' + ${totalPages}">1 / 1</span>
+			            
+			            <a th:if="${currentPage < totalPages - 1}" 
+			               th:href="@{/(page=${currentPage + 1})}" 
+			               style="padding: 8px 16px; background: #1a73e8; border: 1px solid #1a73e8; border-radius: 8px; color: #fff; font-weight: bold; text-decoration: none;">
+			               次の20件 ▶
+			            </a>
+			        </div>
+		</div>
 
-        <div class="bottom-layout">
-            <div class="card">
-                <h2>📁 過去のニュース</h2>
-                <ul class="news-list">
-                    <li class="news-item" th:each="n : ${oldNews}">
-                        <div class="news-content">
-                            <span class="date" th:text="${n.publishedAt}"></span>
-                            <span th:text="${n.title}"></span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h2>📁 過去のトレンドアーカイブ</h2>
-                <ul class="news-list">
-                    <th:block th:each="t, iterStat : ${trends}" th:if="${iterStat.index >= 5}">
-                        <li class="news-item">
-                            <div class="news-content">
-                                <span class="date" th:text="${#temporals.format(t.datetime, 'MM/dd HH:mm')}"></span>
-                                <a th:if="${t.link != null}" th:href="${t.link}" th:text="${t.keyword}" target="_blank"></a>
-                                <span th:if="${t.link == null}" th:text="${t.keyword}"></span>
-                            </div>
-                            <button class="delete-btn" th:onclick="'deleteTrend(' + ${t.id} + ')'" title="削除">×</button>
-                        </li>
-                    </th:block>
-                </ul>
-            </div>
-        </div>
     </div>
 
     <script th:inline="javascript">
-        // 1. 削除処理
+        // 削除処理
         function deleteTrend(id) {
-            if (!confirm("このトレンドを削除してもよろしいですか？")) return;
+            if (!confirm("このニュースを削除してもよろしいですか？")) return;
             
             fetch('/api/trend/delete/' + id, { 
                 method: 'POST' 
             })
             .then(response => {
                 if (response.ok) {
-                    location.reload(); // 削除成功でリロード
+                    location.reload();
                 } else {
                     alert("削除に失敗しました。");
                 }
@@ -148,11 +136,10 @@
             .catch(error => console.error('Error:', error));
         }
 
-        // 2. 自動更新 (5分ごと)
+        // 自動更新 (5分ごと)
         setInterval(() => {
-            console.log("Auto-reloading page...");
             location.reload();
-        }, 300000); // 300,000ms = 5 minutes
+        }, 300000);
     </script>
 
 </body>
