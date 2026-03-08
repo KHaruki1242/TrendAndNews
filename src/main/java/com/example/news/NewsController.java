@@ -63,17 +63,24 @@ public class NewsController {
     }
 
     @PostMapping("/api/weather")
-    @ResponseBody
-    public String receiveWeather(@RequestBody Weather weather) {
-        weatherRepository.deleteAll(); // 港区を消す
+    public String updateWeather(@RequestBody Weather weather) {
+        // 同じ日付のデータが既にあれば削除して、常に最新にする
+        //weatherRepository.deleteByDate(weather.getDate()); 
         weatherRepository.save(weather);
-        return "Success";
+        return "SUCCESS";
     }
-
+    
+ // ニュース削除用のAPI
     @PostMapping("/api/trend/delete/{id}")
     @ResponseBody
-    public String deleteTrend(@PathVariable Long id) {
-        trendRepository.deleteById(id);
-        return "DELETED";
+    public String deleteTrend(@PathVariable("id") Long id) {
+        try {
+            trendRepository.deleteById(id);
+            System.out.println("★削除成功 ID: " + id);
+            return "SUCCESS";
+        } catch (Exception e) {
+            System.err.println("★削除失敗: " + e.getMessage());
+            return "ERROR";
+        }
     }
 }

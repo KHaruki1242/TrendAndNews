@@ -70,18 +70,31 @@
         </div>
 		
 
-        <div class="card">
-            <h2>🌤 天気予報</h2>
-            <div class="weather-grid">
-                <div class="weather-box" th:each="w : ${weathers}">
-                    <strong th:text="${w.prefecture} + ' ' + ${w.city}"></strong><br>
-                    <span th:text="${w.date}"></span><br>
-                    <span th:text="${w.forecast}"></span><br>
-                    <span style="color:#ff4d4f" th:text="${w.maxTemp} + '℃'"></span> / 
-                    <span style="color:#1a73e8" th:text="${w.minTemp} + '℃'"></span>
-                </div>
-            </div>
-        </div>
+		<div class="card">
+		    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+		        <h2>🌤 週間天気予報 (仙台)</h2>
+		        <a href="https://www.jma.go.jp/bosai/map.html#contents=forecast" target="_blank" 
+		           style="font-size: 0.85em; color: #1a73e8; border: 1px solid #1a73e8; padding: 4px 10px; border-radius: 20px;">
+		           全国の天気を見る ↗
+		        </a>
+		    </div>
+
+		    <div class="weather-grid" style="display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px;">
+		        <div class="weather-box" th:each="w : ${weathers}" style="min-width: 120px; flex: 0 0 auto;">
+		            <span style="font-weight: bold;" th:text="${w.date}"></span><br>
+		            
+		            <div style="margin: 10px 0;">
+		                <img th:if="${w.weatherCode != null}" 
+		                     th:src="'https://www.jma.go.jp/bosai/forecast/img/' + ${w.weatherCode} + '.png'" 
+		                     style="width: 40px; height: 40px;">
+		            </div>
+		            
+		            <div style="font-size: 0.85em; margin-bottom: 5px;" th:text="${w.forecast}"></div>
+		            <span style="color:#ff4d4f" th:text="${w.maxTemp}"></span> / 
+		            <span style="color:#1a73e8" th:text="${w.minTemp}"></span>
+		        </div>
+		    </div>
+		</div>
 		
 		<div class="card">
 		    <h2>📰 最近のニュース</h2>
@@ -119,27 +132,24 @@
     </div>
 
     <script th:inline="javascript">
-        // 削除処理
-        function deleteTrend(id) {
-            if (!confirm("このニュースを削除してもよろしいですか？")) return;
-            
-            fetch('/api/trend/delete/' + id, { 
-                method: 'POST' 
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert("削除に失敗しました。");
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-
-        // 自動更新 (5分ごと)
-        setInterval(() => {
-            location.reload();
-        }, 300000);
+		// 削除処理（リロードなしで消す版）
+		        function deleteTrend(id) {
+		            if (!confirm("このニュースを削除してもよろしいですか？")) return;
+		            
+		            fetch('/api/trend/delete/' + id, { 
+		                method: 'POST' 
+		            })
+		            .then(response => response.text())
+		            .then(result => {
+		                if (result === "SUCCESS") {
+		                    // 画面上の該当する行を直接消す（またはリロード）
+		                    location.reload(); 
+		                } else {
+		                    alert("削除に失敗しました。");
+		                }
+		            })
+		            .catch(error => console.error('Error:', error));
+		        }
     </script>
 
 </body>
