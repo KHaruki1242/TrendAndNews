@@ -57,17 +57,17 @@
     <div class="container">
         <h1>News & Trend Dashboard</h1>
 
-        <div class="card">
-            <h2>🔥 今日のトレンド (TOP 5)</h2>
-            <ul class="trend-list">
-                <th:block th:each="t, iterStat : ${recentNews}" th:if="${iterStat.index < 5}">
-                    <li class="trend-item">
-                        <a th:href="${t.link}" th:text="${t.keyword}" target="_blank">トレンド</a>
-                    </li>
-                </th:block>
-                <li th:if="${#lists.isEmpty(recentNews)}">データ収集中です...</li>
-            </ul>
-        </div>
+		<div class="card">
+		    <h2>🔥 今日のトレンド (TOP 5)</h2>
+		    <div class="trend-list" style="display: flex; flex-wrap: wrap; gap: 10px;">
+		        <div th:each="entry : ${topKeywords}" class="trend-item" 
+		             style="background: #eef2ff; padding: 10px 20px; border-radius: 20px; border: 1px solid #d1d5db;">
+		            <span style="font-weight: bold; color: #1d4ed8;" th:text="'#' + ${entry.key}"></span>
+		            <span style="font-size: 0.8em; color: #6b7280; margin-left: 5px;" th:text="${entry.value} + '件'"></span>
+		        </div>
+		        <p th:if="${#maps.isEmpty(topKeywords)}">トレンドを解析中です...</p>
+		    </div>
+		</div>
 		
 
 		<div class="card">

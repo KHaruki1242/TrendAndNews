@@ -17,6 +17,8 @@ public interface TrendRepository extends JpaRepository<Trend, Long> {
     
     // ページ指定（20件ずつなど）で日付順に取得する
     Page<Trend> findAllByOrderByDatetimeDesc(Pageable pageable);
+    
+    List<Trend> findTop100ByOrderByDatetimeDesc();
 }
 
 
