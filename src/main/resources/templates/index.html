@@ -112,22 +112,15 @@
 		            ニュースを収集しています... GASを実行してください。
 		        </li>
 		    </ul>
-			<div class="pagination" th:if="${totalPages > 1}" style="margin-top: 20px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 20px;">
-			            <a th:if="${currentPage > 0}" 
-			               th:href="@{/(page=${currentPage - 1})}" 
-			               style="padding: 8px 16px; background: #fff; border: 1px solid #1a73e8; border-radius: 8px; color: #1a73e8; font-weight: bold; text-decoration: none;">
-			               ◀ 前の20件
-			            </a>
-			            
-			            <span style="font-weight: bold; color: #555;" th:text="${currentPage + 1} + ' / ' + ${totalPages}">1 / 1</span>
-			            
-			            <a th:if="${currentPage < totalPages - 1}" 
-			               th:href="@{/(page=${currentPage + 1})}" 
-			               style="padding: 8px 16px; background: #1a73e8; border: 1px solid #1a73e8; border-radius: 8px; color: #fff; font-weight: bold; text-decoration: none;">
-			               次の20件 ▶
-			            </a>
-			        </div>
-		</div>
+			<div class="pagination" th:if="${totalPages > 1}">
+			    <a th:if="${currentPage > 0}" 
+			       th:href="@{/(page=${currentPage - 1})}" class="btn">◀ 前の20件</a>
+			    
+			    <span th:text="${currentPage + 1} + ' / ' + ${totalPages}">1 / 5</span>
+			    
+			    <a th:if="${currentPage < totalPages - 1}" 
+			       th:href="@{/(page=${currentPage + 1})}" class="btn">次の20件 ▶</a>
+			</div>		</div>
 
     </div>
 

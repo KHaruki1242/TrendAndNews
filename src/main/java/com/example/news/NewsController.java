@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
 
 
 @Controller
@@ -33,25 +35,23 @@ public class NewsController {
     }
 
     @GetMapping("/")
-    public String index(@RequestParam(defaultValue = "0") int page, Model model) {
-        // 全件取得してページ分割（本来はPageableを使いますが、まずは表示優先で！）
-        List<Trend> allTrends = trendRepository.findAll(Sort.by(Sort.Direction.DESC, "datetime"));
+    public String index(@PageableDefault(size = 20, sort = "datetime", direction = Sort.Direction.DESC) Pageable pageable, Model model) {
+        // 1. ページ指定されたニュースを取得
+        Page<Trend> trendPage = trendRepository.findAll(pageable);
         
-        // トレンド集計用（最新100件）
-        List<Trend> forAnalysis = allTrends.stream().limit(100).toList();
+        // 2. トレンド解析用（これは全データから上位を取る）
+        List<Trend> allTrends = trendRepository.findAll();
         List<String> allWords = new ArrayList<>();
-        for (Trend t : forAnalysis) {
+        for (Trend t : allTrends) {
             allWords.addAll(trendService.extractKeywords(t.getKeyword()));
         }
         
-        // HTMLへ渡す
+        // 3. HTMLへ渡す
+        model.addAttribute("recentNews", trendPage.getContent()); // 20件分
+        model.addAttribute("currentPage", trendPage.getNumber()); // 今何ページ目か
+        model.addAttribute("totalPages", trendPage.getTotalPages()); // 全部で何ページか
         model.addAttribute("topKeywords", trendService.getTopKeywords(allWords));
-        model.addAttribute("recentNews", allTrends); // HTMLの${recentNews}に合わせる
         model.addAttribute("weathers", weatherRepository.findAll());
-        
-        // ページネーション用の値（とりあえずエラー回避用）
-        model.addAttribute("currentPage", 0);
-        model.addAttribute("totalPages", 1);
         
         return "index";
     }
