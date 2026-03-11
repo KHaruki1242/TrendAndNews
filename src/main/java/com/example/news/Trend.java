@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 
 @Entity
 public class Trend {
@@ -14,7 +15,9 @@ public class Trend {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // 自動で 1, 2, 3... と増える
     private Long id;
-
+    
+    @Lob // ラージオブジェクトとして扱う宣言
+    @Column(columnDefinition = "TEXT") // DB側に「長いテキストだよ」と教える@Column(length = 2000)
     private String keyword; // タイトル
 
     @Column(length = 1000) // 長いURLも入るように
