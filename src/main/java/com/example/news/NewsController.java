@@ -39,66 +39,63 @@ public class NewsController {
         // 1. ページ指定されたニュースを取得
         Page<Trend> trendPage = trendRepository.findAll(pageable);
         
-        // 2. トレンド解析用（これは全データから上位を取る）
+        // 2. トレンド解析（全データから重み付きで集計）
         List<Trend> allTrends = trendRepository.findAll();
-        List<String> allWords = new ArrayList<>();
+        List<Map<String, Integer>> allKeywordMaps = new ArrayList<>();
+        
         for (Trend t : allTrends) {
-            allWords.addAll(trendService.extractKeywords(t.getKeyword()));
+            // 文字列ではなく「単語 -> ポイント」のMapをリストに追加していく
+            allKeywordMaps.add(trendService.extractKeywordsWithWeight(t.getKeyword()));
         }
         
         // 3. HTMLへ渡す
-        model.addAttribute("recentNews", trendPage.getContent()); // 20件分
-        model.addAttribute("currentPage", trendPage.getNumber()); // 今何ページ目か
-        model.addAttribute("totalPages", trendPage.getTotalPages()); // 全部で何ページか
-        model.addAttribute("topKeywords", trendService.getTopKeywords(allWords));
+        model.addAttribute("recentNews", trendPage.getContent());
+        model.addAttribute("currentPage", trendPage.getNumber());
+        model.addAttribute("totalPages", trendPage.getTotalPages());
+        
+        // メソッド名を getTopKeywordsFromMaps に変更
+        model.addAttribute("topKeywords", trendService.getTopKeywordsFromMaps(allKeywordMaps));
         model.addAttribute("weathers", weatherRepository.findAll());
         
         return "index";
     }
     
- // 確実に GET と POST の両方を、このパスで受け取れるように指定
     @GetMapping("/api/trend")
     @ResponseBody
     public String addTrend(@RequestParam String keyword, @RequestParam String link) {
-        // 1. まずは保存（既存の処理）
         Trend trend = new Trend();
         trend.setKeyword(keyword);
         trend.setLink(link);
         trend.setDatetime(LocalDateTime.now());
         trendRepository.save(trend);
 
-        // 2. 最新のニュース100件くらいからトレンドを分析する
+        // トレンド分析も新しいロジックに合わせる
         List<Trend> recentTrends = trendRepository.findTop100ByOrderByDatetimeDesc();
-        List<String> allWords = new ArrayList<>();
+        List<Map<String, Integer>> keywordMaps = new ArrayList<>();
         for (Trend t : recentTrends) {
-            allWords.addAll(trendService.extractKeywords(t.getKeyword()));
+            keywordMaps.add(trendService.extractKeywordsWithWeight(t.getKeyword()));
         }
 
-        // 3. 集計してログに出してみる
-        Map<String, Integer> top5 = trendService.getTopKeywords(allWords);
-        System.out.println("🔥 今のトレンドTOP5: " + top5);
+        Map<String, Integer> top5 = trendService.getTopKeywordsFromMaps(keywordMaps);
+        System.out.println("🔥 X風トレンドTOP5（重み付き）: " + top5);
 
         return "SUCCESS";
     }
 
+    // --- 以下、weather と delete は変更なしでOK ---
     @PostMapping("/api/weather")
     public String updateWeather(@RequestBody Weather weather) {
-        // 同じ日付のデータが既にあれば削除して、常に最新にする
-        //weatherRepository.deleteByDate(weather.getDate()); 
         weatherRepository.save(weather);
         return "SUCCESS";
     }
     
- // ニュース削除用のAPI
     @PostMapping("/api/trend/delete/{id}")
     @ResponseBody
     public String deleteTrend(@PathVariable("id") Long id) {
         try {
             trendRepository.deleteById(id);
-            System.out.println("★削除成功 ID: " + id);
             return "SUCCESS";
         } catch (Exception e) {
-            System.err.println("★削除失敗: " + e.getMessage());
             return "ERROR";
         }
     }

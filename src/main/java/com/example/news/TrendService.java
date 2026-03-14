@@ -16,36 +16,51 @@ import com.atilika.kuromoji.ipadic.Tokenizer;
 
 @Service
 public class TrendService {
-    // 解析器の準備
     private final Tokenizer tokenizer = new Tokenizer();
 
-    public List<String> extractKeywords(String text) {
-        // 文章をトークン（単語単位）に分解
+    // 1. 単語と「重み（ポイント）」をセットで抽出するように変更
+    public Map<String, Integer> extractKeywordsWithWeight(String text) {
         List<Token> tokens = tokenizer.tokenize(text);
-        
-        return tokens.stream()
-            // 「名詞」だけを抽出
-            .filter(token -> token.getPartOfSpeechLevel1().equals("名詞"))
-            // 2文字以上の単語に絞る（「の」「は」や1文字のノイズを除去）
-            .filter(token -> token.getSurface().length() > 1)
-            // 単語の文字列だけを取り出す
-            .map(Token::getSurface)
-            .collect(Collectors.toList());
+        Map<String, Integer> localCounts = new HashMap<>();
+
+        for (Token token : tokens) {
+            String word = token.getSurface();
+            String pos1 = token.getPartOfSpeechLevel1(); // 名詞など
+            String pos2 = token.getPartOfSpeechLevel2(); // 固有名詞、一般など
+
+            // 名詞かつ2文字以上のみ対象
+            if (pos1.equals("名詞") && word.length() > 1) {
+                // X風ロジック：固有名詞・人名・地域は「3点」、それ以外は「1点」
+                int weight = (pos2.equals("固有名詞") || pos2.equals("人名") || pos2.equals("地域")) ? 3 : 1;
+                localCounts.put(word, localCounts.getOrDefault(word, 0) + weight);
+            }
+        }
+        return localCounts;
     }
-    
- // クラスの中に追加
-    public Map<String, Integer> getTopKeywords(List<String> allWords) {
-        Map<String, Integer> counts = new HashMap<>();
+
+    // 2. 集計側も「ポイントの合計」を計算するように修正
+    public Map<String, Integer> getTopKeywordsFromMaps(List<Map<String, Integer>> keywordMaps) {
+        Map<String, Integer> totalCounts = new HashMap<>();
         
-        // 単語を数える
-        for (String word : allWords) {
-            // 「仙台」「ニュース」「Yahoo」などは多すぎるので除外（ノイズカット）
-            if (word.equals("仙台") || word.equals("Yahoo") || word.equals("ニュース")) continue;
-            counts.put(word, counts.getOrDefault(word, 0) + 1);
+        // 画面を見ながら、ノイズになっている単語をここに追加！
+        List<String> stopWords = List.of(
+        		"仙台", "Yahoo", "ニュース", "NEWS", "jp", "com", 
+        	    "河北", "新聞", "新報", "オンライン", "記事", 
+        	    "宮城", "東日本", "放送", "配信", "一覧",
+        	    "DIG", "TBS", "khb", "秋田", "山形", "福島", "岩手", // 局名や隣県を追加
+        	    "JNN", "ANN", "NNN", "FNN", "提供","東日本放送","東京","東北","東北放送"
+        );
+
+        for (Map<String, Integer> map : keywordMaps) {
+            map.forEach((word, weight) -> {
+                // 大文字小文字を区別せずにチェック
+                if (!stopWords.stream().anyMatch(s -> s.equalsIgnoreCase(word))) {
+                    totalCounts.put(word, totalCounts.getOrDefault(word, 0) + weight);
+                }
+            });
         }
 
-        // 数が多い順に並び替えて、上位5つだけを返す
-        return counts.entrySet().stream()
+        return totalCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
                 .limit(5)
                 .collect(Collectors.toMap(
