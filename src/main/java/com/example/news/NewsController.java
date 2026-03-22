@@ -36,15 +36,15 @@ public class NewsController {
 
     @GetMapping("/")
     public String index(@PageableDefault(size = 20, sort = "datetime", direction = Sort.Direction.DESC) Pageable pageable, Model model) {
-        // 1. ページ指定されたニュースを取得
+        // 1. ニュース一覧（ページング用）はそのまま
         Page<Trend> trendPage = trendRepository.findAll(pageable);
         
-        // 2. トレンド解析（全データから重み付きで集計）
-        List<Trend> allTrends = trendRepository.findAll();
-        List<Map<String, Integer>> allKeywordMaps = new ArrayList<>();
+        // 2. トレンド解析用：ここを「直近24時間」に絞る
+        LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
+        List<Trend> recentTrendsForAnalysis = trendRepository.findByDatetimeAfter(twentyFourHoursAgo);
         
-        for (Trend t : allTrends) {
-            // 文字列ではなく「単語 -> ポイント」のMapをリストに追加していく
+        List<Map<String, Integer>> allKeywordMaps = new ArrayList<>();
+        for (Trend t : recentTrendsForAnalysis) {
             allKeywordMaps.add(trendService.extractKeywordsWithWeight(t.getKeyword()));
         }
         
@@ -52,8 +52,6 @@ public class NewsController {
         model.addAttribute("recentNews", trendPage.getContent());
         model.addAttribute("currentPage", trendPage.getNumber());
         model.addAttribute("totalPages", trendPage.getTotalPages());
-        
-        // メソッド名を getTopKeywordsFromMaps に変更
         model.addAttribute("topKeywords", trendService.getTopKeywordsFromMaps(allKeywordMaps));
         model.addAttribute("weathers", weatherRepository.findAll());
         

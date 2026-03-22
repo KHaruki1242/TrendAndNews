@@ -1,5 +1,6 @@
 package com.example.news;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -19,6 +20,10 @@ public interface TrendRepository extends JpaRepository<Trend, Long> {
     Page<Trend> findAllByOrderByDatetimeDesc(Pageable pageable);
     
     List<Trend> findTop100ByOrderByDatetimeDesc();
+    
+    List<Trend> findByDatetimeAfter(LocalDateTime dateTime);
+    
+    
 }
 
 
